@@ -121,13 +121,7 @@ class MerchantController extends Controller
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
-            'zipcode' => 'nullable|string|max:20',
-            'verification_id' => 'nullable|string|max:255',
-            'verification_document_id' => 'nullable|string|max:255',
-            'verification_used' => 'nullable|string',
-            'verification_status' => 'nullable|string',
-            'verification_document_status' => 'nullable|string|max:255',
-            'verification_date' => 'nullable|date',
+            'zipcode' => 'nullable|string|max:20'
         ]);
 
         $merchant = Merchant::create($validatedData);
@@ -206,13 +200,7 @@ class MerchantController extends Controller
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
-            'zipcode' => 'nullable|string|max:20',
-            'verification_id' => 'nullable|string|max:255',
-            'verification_document_id' => 'nullable|string|max:255',
-            'verification_used' => 'nullable|string',
-            'verification_status' => 'nullable|string',
-            'verification_document_status' => 'nullable|string',
-            'verification_date' => 'nullable|date'
+            'zipcode' => 'nullable|string|max:20'
         ]);
 
         $merchant->update($validatedData);
