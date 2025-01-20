@@ -8,7 +8,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\DeviceController;
-
+use App\Http\Controllers\SuggestionController;
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/test', [MerchantController::class, 'respondOkay']);
@@ -30,6 +30,9 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/merchants/{merchantId}/locations', [MerchantController::class, 'addLocation']);
     Route::get('/merchant/v1/merchants/{merchantId}/locations', [MerchantController::class, 'getLocations']);
     Route::put('/merchant/v1/merchants/{merchantId}/locations/{locationId}', [MerchantController::class, 'updateLocation']);
+
+    // Suggestions
+    Route::get('/merchant/v1/merchants/{merchantId}/location/{locationId}/suggestions', [SuggestionController::class, 'getSuggestions']);
 
     // Customers
     Route::get('/merchant/v1/customers/search', [CustomerController::class, 'search']);
