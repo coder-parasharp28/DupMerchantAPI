@@ -49,7 +49,9 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/items/search', [ItemController::class, 'search']);
 
     // Transaction routes
-    Route::post('/merchant/v1/transactions/payment-intent', [TransactionController::class, 'createPaymentIntent']);
+    Route::middleware(['throttle.transactions'])->group(function () {
+        Route::post('/merchant/v1/transactions/payment-intent', [TransactionController::class, 'createPaymentIntent']);
+    });
     Route::post('/merchant/v1/transactions/finalize/{transactionId}', [TransactionController::class, 'finalizePaymentIntent']);
     Route::get('/merchant/v1/transactions', [TransactionController::class, 'getAllTransactions']);
 
@@ -62,5 +64,6 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/devices', [DeviceController::class, 'store']);
     Route::delete('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'destroy']);
     Route::put('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'update']);
+
 });
 

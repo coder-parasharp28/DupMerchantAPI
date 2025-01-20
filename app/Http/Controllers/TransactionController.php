@@ -104,6 +104,10 @@ class TransactionController extends Controller
             return response()->json(['error' => 'Transaction not found'], 404);
         }
 
+        if ($transaction->status !== 'initiated') {
+            return response()->json(['error' => 'Transaction is not valid.'], 400);
+        }
+
         $transaction->status = 'pending';
         $transaction->save();
 
