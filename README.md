@@ -1,6 +1,13 @@
 
 # About
-Onboarding API
+Merchant API
+
+This is the API supports all the merchant functions including:
+- Devices
+- Customers
+- Transactions
+- Locations
+- Merchants
 
 
 # Local Development
@@ -13,23 +20,33 @@ Running the following commands to get this repo up & running:
 composer update
 ```
 
-- Install all the node dependencies (make sure you have node 14.10.1 or higher)
+- Make sure you have the database credentials in .env file. Once you do, run migrations
 
 ```
-npm install
+php artisan migrate
 ```
 
-- Run npm application in watch mode (this will track and new changes and update the browser)
+- Check for Plaid API keys in .env file.
+    - PLAID_CLIENT_ID
+    - PLAID_SECRET
+    - PLAID_TEMPLATE_ID
+    - PLAID_API_ENDPOINT
 
-```
-npm run watch-poll
-```
+- Check for Stripe API keys and env variables in .env file.
 
-- Run npm application in prod
+    - STRIPE_SECRET
+    - STRIPE_PUBLIC
+    - STRIPE_MANUAL_PROCESSING_RATE
+    - STRIPE_MANUAL_PROCESSING_CENTS
+    - PLATFORM_MANUAL_PROCESSING_RATE
+    - PLATFORM_MANUAL_PROCESSING_CENTS
 
-```
-npm run prod
-```
+- Check for Algolia API keys in .env file.
+    - SCOUT_DRIVER
+    - ALGOLIA_APP_ID
+    - ALGOLIA_SECRET
+
+- Check for Gateway Secret in .env file.
 
 
 
