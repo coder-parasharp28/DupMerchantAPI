@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Merchant;
 use App\Models\MerchantMember;
+use App\Models\MerchantPayout;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
@@ -13,6 +14,93 @@ class MerchantController extends Controller
     public function respondOkay()
     {
         return response()->json(["message" => "okay"]);
+    }
+
+    // Create Payout on Plaid
+    public function createPayoutVerification(Request $request, $merchantId)
+    {
+        $merchant = Merchant::findOrFail($merchantId);
+
+        // Check if verification_id is already set
+        if ($merchant->verification_document_id != null) {
+            return $this->getPayoutVerificationShareableUrl($request, $merchantId);
+        }
+
+        $response = \Http::post(env("PLAID_API_ENDPOINT") . "/identity_verification/create?idempotent=true", [
+            'client_user_id' => $request->header('X-USER-ID').'-'.time(),
+            'client_id' => env("PLAID_CLIENT_ID"),
+            'secret' => env("PLAID_SECRET"),
+            'is_shareable' => true,
+            'template_id' => env("PLAID_PAYOUT_TEMPLATE_ID"),
+            'gave_consent' => false
+        ]);
+
+        if ($response->successful()) {
+            $verificationDocumentId = $response->json('id');
+            $shareableUrl = $response->json('shareable_url');
+            
+            $merchant->verification_document_id = $verificationDocumentId;
+            $merchant->verification_document_status = 'IN_PROGRESS';
+            $merchant->save();
+
+            return response()->json([
+                'message' => 'Payout verification created successfully',
+                'shareable_url' => $shareableUrl,
+                'status' => $merchant->verification_document_status
+            ]);
+        } else {
+            return response()->json(['error' => 'Failed to create payout verification'], $response->status());
+        }
+    }
+
+    // Get Payout Verification Shareable URL
+    public function getPayoutVerificationShareableUrl(Request $request, $merchantId)
+    {
+        $merchant = Merchant::findOrFail($merchantId);
+
+        $response = \Http::post(env("PLAID_API_ENDPOINT") . "/identity_verification/get", [
+            'identity_verification_id' => $merchant->verification_document_id,
+            'client_id' => env("PLAID_CLIENT_ID"),
+            'secret' => env("PLAID_SECRET"),
+            'is_shareable' => true,
+            'template_id' => env("PLAID_PAYOUT_TEMPLATE_ID")
+        ]);
+
+        if ($response->successful()) {
+            $shareableUrl = $response->json('shareable_url');
+            $status = $response->json('status');
+
+            switch ($status) {
+                case 'active':
+                    $merchant_status = 'IN_PROGRESS';
+                    break;
+                case 'failed':
+                    $merchant_status = 'FAILED';
+                    break;
+                case 'success':
+                    $merchant_status = 'SUCCESS';
+                    break;
+                case 'expired':
+                    $merchant_status = 'EXPIRED';
+                    break;
+                case 'pending_review':
+                    $merchant_status = 'PENDING';  
+                    break;
+                default:
+                    $merchant_status = 'IN_PROGRESS';       
+            }
+
+            $merchant->verification_document_status = $merchant_status;
+            $merchant->save();
+
+            return response()->json([
+                'message' => 'Payout verification shareable URL retrieved successfully',
+                'shareable_url' => $shareableUrl,
+                'status' => $merchant_status
+            ]);
+        } else {
+            return response()->json(['error' => 'Failed to retrieve payout verification shareable URL'], $response->status());
+        }
     }
 
     // Create Identification on Plaid
@@ -305,5 +393,51 @@ class MerchantController extends Controller
         $locations = $merchant->locations;
 
         return response()->json($locations);
+    }
+
+    // Create a payout for a merchant
+    public function createPayout(Request $request, $merchantId)
+    {
+        $merchant = Merchant::findOrFail($merchantId);
+
+        $validatedData = $request->validate([
+            'nickname' => 'required|string|max:255',
+            'account_number' => 'required|string|max:255',
+            'routing_number' => 'required|string|max:255',
+            'bank' => 'nullable|string|max:255',
+        ]);
+
+        $merchantPayout = MerchantPayout::create([
+            'merchant_id' => $merchant->id,
+            'nickname' => $validatedData['nickname'] ?? '',
+            'account_number' => $validatedData['account_number'] ?? '',
+            'routing_number' => $validatedData['routing_number'] ?? '',
+            'bank' => $validatedData['bank'] ?? '',
+        ]);
+
+        return response()->json($merchantPayout, 201);
+    }
+
+    // Get a payout for a merchant
+    public function getPayout($merchantId)
+    {
+        $merchantPayout = MerchantPayout::where('merchant_id', $merchantId)->first();
+        return response()->json($merchantPayout);
+    }
+
+    // Update a payout for a merchant
+    public function updatePayout(Request $request, $merchantId)
+    {
+        $merchantPayout = MerchantPayout::where('merchant_id', $merchantId)->first();
+
+        $validatedData = $request->validate([
+            'nickname' => 'sometimes|required|string|max:255',
+            'account_number' => 'sometimes|required|string|max:255',
+            'routing_number' => 'sometimes|required|string|max:255',
+            'bank' => 'nullable|string|max:255',
+        ]);
+
+        $merchantPayout->update($validatedData);
+        return response()->json($merchantPayout);
     }
 }

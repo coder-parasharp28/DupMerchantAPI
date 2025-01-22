@@ -19,12 +19,19 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::put('/merchant/v1/merchants/{id}', [MerchantController::class, 'update']);
     Route::delete('/merchant/v1/merchants/{id}', [MerchantController::class, 'destroy']);
 
+    // Payout routes
+    Route::post('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'createPayout']);
+    Route::get('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'getPayout']);
+    Route::put('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'updatePayout']);
+
     // Get merchants by owner ID
     Route::get('/merchant/v1/merchants', [MerchantController::class, 'getByOwnerId']);
 
     // Plaid verification
     Route::post('/merchant/v1/merchants/{merchantId}/identity-verification/create', [MerchantController::class, 'createIdentityVerification']);
     Route::get('/merchant/v1/merchants/{merchantId}/identity-verification/get-shareable-url', [MerchantController::class, 'getIdentityVerificationShareableUrl']);
+    Route::post('/merchant/v1/merchants/{merchantId}/payout-verification/create', [MerchantController::class, 'createPayoutVerification']);
+    Route::get('/merchant/v1/merchants/{merchantId}/payout-verification/get-shareable-url', [MerchantController::class, 'getPayoutVerificationShareableUrl']);
 
     // Locations
     Route::post('/merchant/v1/merchants/{merchantId}/locations', [MerchantController::class, 'addLocation']);
