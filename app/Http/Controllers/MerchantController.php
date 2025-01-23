@@ -339,6 +339,7 @@ class MerchantController extends Controller
             'state' => 'required|string|max:255',
             'country' => 'required|string|max:255',
             'zipcode' => 'required|string|max:20',
+            'tax_rate' => 'nullable|numeric',
         ]);
 
         // Create a Stripe location
