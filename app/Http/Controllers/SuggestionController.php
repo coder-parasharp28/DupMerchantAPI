@@ -64,7 +64,7 @@ class SuggestionController extends Controller
         if ($merchant && $merchant->verification_document_status === 'NOT_STARTED') {
             $suggestions[] = [
                 'icon' => 'DocumentAddIcon',
-                'title' => "Complete Your Verification",
+                'title' => "Complete Verification",
                 'description' => "Your account isn't verified for payouts yet. Let's complete the verification process!",
                 'link' => 'balances'
             ];
