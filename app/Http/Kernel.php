@@ -13,5 +13,6 @@ class Kernel extends HttpKernel
      */
     protected $routeMiddleware = [
         'throttle.transactions' => \App\Http\Middleware\ThrottleTransactions::class,
+        'check.merchant.verification' => \App\Http\Middleware\CheckMerchantVerificationStatus::class,
     ];
 }

@@ -59,7 +59,7 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/items/search', [ItemController::class, 'search']);
 
     // Transaction routes
-    Route::middleware(['throttle.transactions'])->group(function () {
+    Route::middleware(['throttle.transactions', 'check.merchant.verification'])->group(function () {
         Route::post('/merchant/v1/transactions/payment-intent', [TransactionController::class, 'createPaymentIntent']);
     });
     Route::post('/merchant/v1/transactions/finalize/{transactionId}', [TransactionController::class, 'finalizePaymentIntent']);
