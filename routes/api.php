@@ -59,10 +59,13 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/items/search', [ItemController::class, 'search']);
 
     // Transaction routes
-    Route::middleware(['throttle.transactions', 'check.merchant.verification'])->group(function () {
+    //Route::middleware(['throttle.transactions', 'check.merchant.verification'])->group(function () {
         Route::post('/merchant/v1/transactions/payment-intent', [TransactionController::class, 'createPaymentIntent']);
-    });
-    Route::post('/merchant/v1/transactions/finalize/{transactionId}', [TransactionController::class, 'finalizePaymentIntent']);
+    //});
+    
+    Route::post('/merchant/v1/transactions/payment-intent/process', [TransactionController::class, 'processPaymentIntent']);
+    Route::post('/merchant/v1/transactions/payment-intent/check', [TransactionController::class, 'checkPaymentIntent']);
+    Route::post('/merchant/v1/transactions/payment-intent/finalize', [TransactionController::class, 'finalizePaymentIntent']);
     Route::get('/merchant/v1/transactions', [TransactionController::class, 'getAllTransactions']);
 
     // Route to get weekly metrics
@@ -74,6 +77,6 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/devices', [DeviceController::class, 'store']);
     Route::delete('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'destroy']);
     Route::put('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'update']);
-
+    Route::get('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'getDevice']);
 });
 

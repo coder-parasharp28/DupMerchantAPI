@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('merchant_id')->constrained('merchants');
             $table->foreignUuid('location_id')->constrained('locations');
-            $table->foreignUuid('customer_id')->constrained('customers');
+            $table->foreignUuid('customer_id')->nullable()->constrained('customers');
             $table->string('payment_intent_id')->nullable();
             $table->enum('payment_type', ['cash', 'card_present', 'manual', 'online', 'other']);
             $table->string('card_type')->nullable();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->decimal('platform_fee', 20, 6)->default(0);
             $table->decimal('tip_amount', 20, 6)->default(0);
             $table->decimal('net_amount', 20, 6)->default(0);
-            $table->enum('status', ['initiated', 'pending', 'completed', 'cancelled'])->default('initiated');
+            $table->enum('status', ['initiated', 'in_progress', 'pending', 'completed', 'cancelled'])->default('initiated');
             $table->timestamps();
 
             $table->index('merchant_id');

@@ -98,4 +98,17 @@ class DeviceController extends Controller
 
         return response()->json($device);
     }
+
+    // Get a specific device's reader info
+    public function getDevice($deviceId)
+    {
+        $device = Device::findOrFail($deviceId);
+
+        $stripe = new StripeClient(env('STRIPE_SECRET'));$stripe = new \Stripe\StripeClient('sk_test_51Q8ABJRpHrzPp5HL0JVdcaCNz7mrbzKiF1hSjVNXuTvA09vEsrUZyENx3C3RGgDglnld1IVShR9RtD8nJbjt7u4G00j4Jtre5i');
+
+        $reader = $stripe->terminal->readers->retrieve($device->stripe_reader_id, []);
+
+        $device->readerInfo = $reader;
+        return response()->json($device);
+    }
 }

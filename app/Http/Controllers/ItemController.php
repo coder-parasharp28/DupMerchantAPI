@@ -71,7 +71,11 @@ class ItemController extends Controller
 
             // Delete variations that are not in the incoming request
             $variationsToDelete = array_diff($existingVariationIds, $incomingVariationIds);
-            $item->variations()->whereIn('id', $variationsToDelete)->delete();
+            try {
+                $item->variations()->whereIn('id', $variationsToDelete)->delete();
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Failed to delete variations, as it may be in use in a transaction.'], 400);
+            }
 
             foreach ($validatedData['variations'] as $variationData) {
                 if (isset($variationData['id'])) {
@@ -162,11 +166,19 @@ class ItemController extends Controller
      */
     public function deleteVariation($variationId)
     {
-        $item = Item::findOrFail($itemId);
-        $variation = $item->variations()->findOrFail($variationId);
-        $variation->delete();
+        try {
+            $item = Item::findOrFail($itemId);
+            $variation = $item->variations()->findOrFail($variationId);
+            $variation->delete();
 
-        return response()->json(['message' => 'Item variation deleted successfully'], 200);
+            return response()->json(['message' => 'Item variation deleted successfully'], 200);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle integrity constraint violation
+            if ($e->getCode() == '23000') {
+                return response()->json(['error' => 'Cannot delete item variation as it is being used in a transaction.'], 400);
+            }
+            return response()->json(['error' => 'Failed to delete item variation: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
