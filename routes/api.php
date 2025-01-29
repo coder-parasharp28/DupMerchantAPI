@@ -9,6 +9,8 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\SuggestionController;
+use App\Http\Controllers\AdsController;
+use App\Http\Controllers\AdsCampaignController;
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/test', [MerchantController::class, 'respondOkay']);
@@ -78,5 +80,24 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::delete('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'destroy']);
     Route::put('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'update']);
     Route::get('/merchant/v1/devices/{deviceId}', [DeviceController::class, 'getDevice']);
+
+    // Ads routes
+    Route::post('/merchant/v1/ads/integrations', [AdsController::class, 'createAdsIntegration']);
+    Route::put('/merchant/v1/ads/integrations/{id}', [AdsController::class, 'updateAdsIntegration']);
+    Route::get('/merchant/v1/ads/integrations/{merchantId}', [AdsController::class, 'getAdsIntegrationsByMerchantId']);
+
+    // Google OAuth
+    Route::get('/merchant/v1/ads/integrations/{merchantId}/oauth/url', [AdsController::class, 'getGoogleOauthUrl']);
+    Route::post('/merchant/v1/ads/integrations/oauth/token', [AdsController::class, 'getGoogleOauthToken']);
+
+    // Ad Campaigns
+    Route::post('/merchant/v1/ads/campaigns', [AdsCampaignController::class, 'createAdCampaign']);
+    Route::put('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'updateAdCampaign']);
+    Route::get('/merchant/v1/ads/campaigns', [AdsCampaignController::class, 'getAdCampaigns']);
+    Route::get('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'getAdCampaign']);
+    Route::delete('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'deleteAdCampaign']);
+
+    // Ad Campaigns
+    Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContent']);
 });
 

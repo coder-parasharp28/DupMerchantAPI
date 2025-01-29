@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/scout": "^10.11",
         "laravel/tinker": "^2.9",
+        "openai-php/client": "^0.10.3",
         "sentry/sentry-laravel": "^4.10",
         "stripe/stripe-php": "^16.4"
     },
