@@ -104,7 +104,7 @@ class DeviceController extends Controller
     {
         $device = Device::findOrFail($deviceId);
 
-        $stripe = new StripeClient(env('STRIPE_SECRET'));$stripe = new \Stripe\StripeClient('sk_test_51Q8ABJRpHrzPp5HL0JVdcaCNz7mrbzKiF1hSjVNXuTvA09vEsrUZyENx3C3RGgDglnld1IVShR9RtD8nJbjt7u4G00j4Jtre5i');
+        $stripe = new StripeClient(env('STRIPE_SECRET'));
 
         $reader = $stripe->terminal->readers->retrieve($device->stripe_reader_id, []);
 
