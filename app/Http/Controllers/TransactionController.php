@@ -158,6 +158,37 @@ class TransactionController extends Controller
         return response()->json($response);
     }
 
+    // Cancel a payment intent on reader - card present
+    public function cancelPaymentIntent(Request $request) {
+        $validatedData = $request->validate([
+            'merchant_id' => 'required|exists:merchants,id',
+            'location_id' => 'required|exists:locations,id',
+            'transaction_id' => 'required|exists:transactions,id',
+            'device_id' => 'required|string'    
+        ]);
+
+        $transaction = Transaction::find($validatedData['transaction_id']);
+
+        if (!$transaction) {
+            return response()->json(['error' => 'Transaction not found'], 404);
+        }
+
+        $device = Device::where('id', $validatedData['device_id'])->first();
+
+        if (!$device) {
+            return response()->json(['error' => 'Device not found.'], 404);
+        }
+
+        $stripe = new StripeClient(env('STRIPE_SECRET'));
+
+        $stripe->terminal->readers->cancelAction($device->stripe_reader_id, []);
+
+        $transaction->status = 'cancelled';
+        $transaction->save();
+
+        return response()->json(['status' => 'cancelled']);
+    }
+
     // Confirm a payment intent on reader - card present
     public function checkPaymentIntent(Request $request) {
 

@@ -72,6 +72,7 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     //});
     
     Route::post('/merchant/v1/transactions/payment-intent/process', [TransactionController::class, 'processPaymentIntent']);
+    Route::post('/merchant/v1/transactions/payment-intent/cancel', [TransactionController::class, 'cancelPaymentIntent']);
     Route::post('/merchant/v1/transactions/payment-intent/check', [TransactionController::class, 'checkPaymentIntent']);
     Route::post('/merchant/v1/transactions/payment-intent/finalize', [TransactionController::class, 'finalizePaymentIntent']);
     Route::get('/merchant/v1/transactions', [TransactionController::class, 'getAllTransactions']);
