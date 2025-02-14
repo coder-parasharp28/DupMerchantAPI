@@ -14,7 +14,7 @@ use App\Models\ItemVariation;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Device;
-
+use App\Jobs\FinalizeTransactionJob;
 
 
 class TransactionController extends Controller
@@ -275,6 +275,8 @@ class TransactionController extends Controller
                 'card_last_four' => $cardLastFour,
             ]);
 
+            dispatch(new FinalizeTransactionJob($transaction));
+
             // Return success response
             return response()->json(['success' => true, 'transaction' => $transaction]);
 
@@ -387,11 +389,11 @@ class TransactionController extends Controller
         // Return the metrics as a JSON response
         return response()->json([
             'net_sales' => round($netSales, 2),
-            'net_sales_change_percentage' => $netSalesChange,
+            'net_sales_change_percentage' => round($netSalesChange, 2),
             'gross_sales' => round($grossSales, 2),
-            'gross_sales_change_percentage' => $grossSalesChange,
+            'gross_sales_change_percentage' => round($grossSalesChange, 2),
             'transaction_count' => $transactionCount,
-            'transaction_count_change_percentage' => $transactionCountChange,
+            'transaction_count_change_percentage' => round($transactionCountChange, 2),
             'payment_types_breakdown' => $paymentTypesBreakdown,
         ]);
     }

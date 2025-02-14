@@ -11,7 +11,7 @@ class PlatformFeesBalance extends Model
     use HasFactory;
 
     // Define the table associated with the model
-    protected $table = 'platform_fees_balance';
+    protected $table = 'platform_fees_balances';
 
     // Specify the fields that are mass assignable
     protected $fillable = [

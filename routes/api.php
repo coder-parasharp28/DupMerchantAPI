@@ -11,6 +11,9 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AdsCampaignController;
+use App\Http\Controllers\ReconciliationController;
+use App\Http\Controllers\MerchantBalanceController;
+
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/test', [MerchantController::class, 'respondOkay']);
@@ -25,6 +28,9 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'createPayout']);
     Route::get('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'getPayout']);
     Route::put('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'updatePayout']);
+
+    // Merchant Balance
+    Route::post('/merchant/v1/merchants/locations/balance', [MerchantBalanceController::class, 'getCurrentBalance']);
 
     // Get merchants by owner ID
     Route::get('/merchant/v1/merchants', [MerchantController::class, 'getByOwnerId']);
@@ -69,6 +75,9 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/transactions/payment-intent/check', [TransactionController::class, 'checkPaymentIntent']);
     Route::post('/merchant/v1/transactions/payment-intent/finalize', [TransactionController::class, 'finalizePaymentIntent']);
     Route::get('/merchant/v1/transactions', [TransactionController::class, 'getAllTransactions']);
+
+    // Reconciliation
+    Route::post('/merchant/v1/reconciliation/dispatch-daily', [ReconciliationController::class, 'dispatchDailyJob']);
 
     // Route to get weekly metrics
     Route::get('/merchant/v1/transactions/metrics', [TransactionController::class, 'getWeeklyMetrics']);

@@ -10,7 +10,7 @@ class MerchantBalance extends Model
     use HasFactory;
 
     // Define the table associated with the model
-    protected $table = 'merchant_balance';
+    protected $table = 'merchant_balances';
 
     // Specify the fields that are mass assignable
     protected $fillable = [

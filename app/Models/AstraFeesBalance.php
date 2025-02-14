@@ -10,7 +10,7 @@ class AstraFeesBalance extends Model
     use HasFactory;
 
     // Define the table associated with the model
-    protected $table = 'astra_fees_balance';
+    protected $table = 'astra_fees_balances';
 
     // Specify the fields that are mass assignable
     protected $fillable = [

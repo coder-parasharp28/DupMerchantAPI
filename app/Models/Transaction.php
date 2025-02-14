@@ -29,6 +29,7 @@ class Transaction extends Model
         'tip_amount',
         'net_amount',
         'status',
+        'conciliation_status'
     ];
 
     protected $keyType = 'string';
