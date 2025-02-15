@@ -214,6 +214,10 @@ class MerchantController extends Controller
 
         $merchant = Merchant::create($validatedData);
 
+        // By pass verification for now. TODO: Decide how we want to verify merchants for ads.
+        $merchant->verification_status = 'SUCCESS';
+        $merchant->save();
+
         // Add the owner to merchant_members
         MerchantMember::create([
             'merchant_id' => $merchant->id,
