@@ -15,12 +15,19 @@ class AdsIntegration extends Model
 
     protected $fillable = [
         'merchant_id',
+        'location_id',
         'type',
         'access_token',
         'expires_in',
         'refresh_token',
         'customer_id',
+        'mcc_id',
         'status',
+        'gbp_linking_status',
+        'gbp_admin_invitation_status',
+        'ads_account_creation_status',
+        'ads_account_conversion_status',
+        'ads_account_billing_status',
     ];
 
     protected static function boot()

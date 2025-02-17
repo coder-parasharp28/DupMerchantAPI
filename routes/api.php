@@ -94,11 +94,19 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     // Ads routes
     Route::post('/merchant/v1/ads/integrations', [AdsController::class, 'createAdsIntegration']);
     Route::put('/merchant/v1/ads/integrations/{id}', [AdsController::class, 'updateAdsIntegration']);
-    Route::get('/merchant/v1/ads/integrations/{merchantId}', [AdsController::class, 'getAdsIntegrationsByMerchantId']);
+    Route::get('/merchant/v1/ads/integrations/merchant/{merchantId}/location/{locationId}', [AdsController::class, 'getAdsIntegrationsByMerchantIdAndLocationId']);
 
     // Google OAuth
-    Route::get('/merchant/v1/ads/integrations/{merchantId}/oauth/url', [AdsController::class, 'getGoogleOauthUrl']);
+    Route::post('/merchant/v1/ads/integrations/oauth/url', [AdsController::class, 'getGoogleOauthUrl']);
     Route::post('/merchant/v1/ads/integrations/oauth/token', [AdsController::class, 'getGoogleOauthToken']);
+
+    // Google My Business
+    Route::post('/merchant/v1/ads/integrations/google-my-business/accounts/locations', [AdsController::class, 'getGoogleBusinessProfiles']);
+    Route::post('/merchant/v1/ads/integrations/google-my-business/accounts/locations/link', [AdsController::class, 'linkGoogleBusinessProfile']);
+    Route::get('/merchant/v1/ads/integrations/google-my-business/accounts/locations/linked', [AdsController::class, 'getLinkedGoogleBusinessProfiles']);
+
+    // Google Ads Accounts
+    Route::post('/merchant/v1/ads/integrations/google-ads/accounts', [AdsController::class, 'createGoogleAdsAccount']);
 
     // Ad Campaigns
     Route::post('/merchant/v1/ads/campaigns', [AdsCampaignController::class, 'createAdCampaign']);

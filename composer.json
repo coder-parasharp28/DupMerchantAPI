@@ -8,6 +8,7 @@
         "php": "^8.2",
         "algolia/algoliasearch-client-php": "^4.9",
         "aschmelyun/fleet": "^1.1",
+        "googleads/google-ads-php": "^26.0",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/scout": "^10.11",

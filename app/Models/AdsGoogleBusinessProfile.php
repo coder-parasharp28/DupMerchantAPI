@@ -15,15 +15,11 @@ class AdsGoogleBusinessProfile extends Model
 
     protected $fillable = [
         'merchant_id',
+        'location_id',
         'ads_integration_id',
         'google_business_profile_id',
         'name',
-        'address1',
-        'address2',
-        'city',
-        'state',
-        'country',
-        'zip',
+        'google_business_profile_object'
     ];
 
     protected static function boot()
