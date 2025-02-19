@@ -16,9 +16,15 @@ class CreateAdCampaignsTable extends Migration
             $table->uuid('merchant_id')->foreignId('merchants')->constrained('merchants');
             $table->uuid('location_id')->foreignId('locations')->constrained('locations');
             $table->uuid('business_profile_id')->foreignId('business_profiles')->constrained('business_profiles')->nullable();
+            $table->string('external_id')->nullable();
             $table->string('name');
             $table->decimal('budget', 10, 2);
-            $table->enum('status', ['draft', 'active', 'paused', 'completed'])->default('draft');
+            $table->enum('status', ['draft', 'learning', 'active', 'paused', 'completed'])->default('draft');
+            $table->string('processing_status')->default('pending');
+            $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
+            $table->string('stripe_checkout_session_id')->nullable();
+            $table->string('stripe_subscription_id')->nullable();
+            $table->string('stripe_price_id')->nullable();
             $table->enum('type', ['smart', 'pmax', 'search', 'display', 'video'])->default('search');
             $table->enum('goal', ['awareness', 'consideration', 'conversion'])->default('awareness');
             $table->string('address_line_1')->nullable();

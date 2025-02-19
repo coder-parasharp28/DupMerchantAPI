@@ -344,7 +344,7 @@ class AdsController extends Controller
                                             ->where('ads_integration_id', $adsIntegration->id)
                                             ->first();
 
-        $gbpJSON = json_encode($request->google_business_profile_object);
+        $gbpJSON = $request->google_business_profile_object;
 
         if ($adsGoogleBusinessProfile) {
             $adsGoogleBusinessProfile->update([

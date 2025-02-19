@@ -209,7 +209,8 @@ class MerchantController extends Controller
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
-            'zipcode' => 'nullable|string|max:20'
+            'zipcode' => 'nullable|string|max:20',
+            'business_email' => 'required|email',
         ]);
 
         $merchant = Merchant::create($validatedData);
@@ -239,6 +240,12 @@ class MerchantController extends Controller
             ],
         ]);
 
+        // Create a Stripe customer
+        $stripeCustomer = $stripe->customers->create([
+            'email' => $merchant->business_email,
+            'name' => $merchant->name.'-'.$merchant->city,
+        ]);
+
         // Create a location for the merchant using the merchant's address
         $location = $merchant->locations()->create([
             'name' => $merchant->name, 
@@ -249,6 +256,8 @@ class MerchantController extends Controller
             'country' => $merchant->country,
             'zipcode' => $merchant->zipcode,
             'stripe_location_id' => $stripeLocation->id,
+            'stripe_customer_id' => $stripeCustomer->id,
+            'business_email' => $merchant->business_email,
         ]);
 
         return response()->json($merchant, 201);
@@ -292,7 +301,8 @@ class MerchantController extends Controller
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
-            'zipcode' => 'nullable|string|max:20'
+            'zipcode' => 'nullable|string|max:20',
+            'business_email' => 'nullable|email',
         ]);
 
         $merchant->update($validatedData);
@@ -344,6 +354,9 @@ class MerchantController extends Controller
             'country' => 'required|string|max:255',
             'zipcode' => 'required|string|max:20',
             'tax_rate' => 'nullable|numeric',
+            'business_email' => 'required|email',
+            'min_avg_order_value' => 'nullable|numeric|min:0',
+            'max_avg_order_value' => 'nullable|numeric|min:0',
         ]);
 
         // Create a Stripe location
@@ -359,8 +372,15 @@ class MerchantController extends Controller
             ],
         ]);
 
+        // Create a Stripe customer
+        $stripeCustomer = $stripe->customers->create([
+            'email' => $validatedData['business_email'],
+            'name' => $validatedData['name'].'-'.$validatedData['city'],
+        ]);
+
         $location = $merchant->locations()->create($validatedData);
         $location->stripe_location_id = $stripeLocation->id;
+        $location->stripe_customer_id = $stripeCustomer->id;
         $location->save();
 
         return response()->json($location, 201);
@@ -385,7 +405,18 @@ class MerchantController extends Controller
             'country' => 'sometimes|required|string|max:255',
             'zipcode' => 'sometimes|required|string|max:20',
             'tax_rate' => 'nullable|numeric',
+            'min_avg_order_value' => 'nullable|numeric|min:0',
+            'max_avg_order_value' => 'nullable|numeric|min:0',
+            'business_email' => 'nullable|email',
         ]);
+
+        // Update Stripe customer if business_email is provided
+        if ($validatedData['business_email']) {
+            $stripe = new StripeClient(env('STRIPE_SECRET'));
+            $stripe->customers->update($location->stripe_customer_id, [
+                'email' => $validatedData['business_email'],
+            ]);
+        }
 
         $location->update($validatedData);
         return response()->json($location);

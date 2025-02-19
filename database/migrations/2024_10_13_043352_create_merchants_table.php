@@ -24,6 +24,7 @@ class CreateMerchantsTable extends Migration
             $table->string('state')->nullable();
             $table->string('country')->nullable();
             $table->string('zipcode')->nullable();
+            $table->string('business_email')->nullable();
             $table->string('verification_id')->nullable();
             $table->string('verification_document_id')->nullable();
             $table->string('verification_used')->nullable();

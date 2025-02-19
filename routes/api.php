@@ -13,6 +13,7 @@ use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AdsCampaignController;
 use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\MerchantBalanceController;
+use App\Http\Controllers\BillingController;
 
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
@@ -45,6 +46,11 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::post('/merchant/v1/merchants/{merchantId}/locations', [MerchantController::class, 'addLocation']);
     Route::get('/merchant/v1/merchants/{merchantId}/locations', [MerchantController::class, 'getLocations']);
     Route::put('/merchant/v1/merchants/{merchantId}/locations/{locationId}', [MerchantController::class, 'updateLocation']);
+
+    // Billing
+    Route::get('/merchant/v1/merchants/{merchantId}/locations/{locationId}/billing/customer-portal', [BillingController::class, 'getCustomerPortalUrl']);
+    Route::get('/merchant/v1/merchants/{merchantId}/locations/{locationId}/billing/ad-campaigns/{adCampaignId}/subscription-status', [BillingController::class, 'checkSubscriptionStatus']);
+    Route::post('/merchant/v1/merchants/{merchantId}/locations/{locationId}/billing/ad-campaigns/{adCampaignId}/checkout', [BillingController::class, 'createCheckoutSession']);
 
     // Suggestions
     Route::get('/merchant/v1/merchants/{merchantId}/location/{locationId}/suggestions', [SuggestionController::class, 'getSuggestions']);
@@ -117,5 +123,6 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
 
     // Ad Campaigns
     Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContent']);
+    Route::post('/merchant/v1/ads/campaigns/copy/generate-by-prompt', [AdsCampaignController::class, 'generateAdCopyByPrompt']);
 });
 

@@ -199,7 +199,7 @@ class ItemController extends Controller
         }
 
         $items = Item::search($merchantId . " " . $locationId . " " . $query)
-            ->get();
+            ->get()->load('variations');
 
         return response()->json($items, 200);
     }

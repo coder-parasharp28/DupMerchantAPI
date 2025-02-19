@@ -1,19 +1,28 @@
 <?php
 
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class AccountSeeder extends Seeder
+class CreateAccountsTable extends Migration
 {
-    public function run()
+    public function up()
     {
-        // Insert default accounts into the accounts table
+        // Create the accounts table
+        Schema::create('accounts', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('account_name');
+            $table->string('account_type');
+            $table->text('account_description');
+            $table->timestamps();
+        });
+
+        // Seed the accounts table with default data
         DB::table('accounts')->insert([
             [
-                'id' => Str::uuid(), // Generating UUID for the primary key
+                'id' => Str::uuid(),
                 'account_name' => 'Revenue',
                 'account_type' => 'Revenue',
                 'account_description' => 'Income from sales or services.',
@@ -69,6 +78,11 @@ class AccountSeeder extends Seeder
                 'updated_at' => now()
             ]
         ]);
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('accounts');
     }
 }
 

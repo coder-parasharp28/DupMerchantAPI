@@ -21,10 +21,14 @@ return new class extends Migration
            $table->string('state');
            $table->string('country');
            $table->string('zipcode');
+           $table->string('business_email')->nullable();
            $table->double('tax_rate')->default(0);
            $table->string('stripe_location_id')->nullable();
+           $table->string('stripe_customer_id')->nullable();
+           $table->decimal('min_avg_order_value', 8, 2)->default(20);
+           $table->decimal('max_avg_order_value', 8, 2)->default(50);
            $table->timestamps();
-
+           
            $table->index('merchant_id');
        });
    }

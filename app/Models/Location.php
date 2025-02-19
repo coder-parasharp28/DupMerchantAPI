@@ -19,8 +19,12 @@ class Location extends Model
         'state',
         'country',
         'zipcode',
+        'business_email',
         'tax_rate',
-        'stripe_location_id'
+        'stripe_location_id',
+        'stripe_customer_id',
+        'min_avg_order_value',
+        'max_avg_order_value'
     ];
 
     public $incrementing = false;

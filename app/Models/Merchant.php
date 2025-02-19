@@ -25,6 +25,7 @@ class Merchant extends Model
         'state',
         'country',
         'zipcode',
+        'business_email',
         'verification_id',
         'verification_document_id',
         'verification_used',
