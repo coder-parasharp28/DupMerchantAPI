@@ -10,9 +10,34 @@ use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use OpenAI;
+use App\Jobs\CreateGoogleSmartCampaignJob;
 
 class AdsCampaignController extends Controller
 {
+    /**
+     * Dispatch the Smart Campaign job
+     */
+    public function dispatchSmartCampaignJob(Request $request)
+    {
+        // validate super admin password    
+        $validator = Validator::make($request->all(), [
+            'super_admin_password' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if ($request->super_admin_password !== env('SUPER_ADMIN_PASSWORD')) {
+            return response()->json(['error' => 'Invalid password'], 401);
+        }
+
+        // Dispatch the job
+        CreateGoogleSmartCampaignJob::dispatch();
+
+        return response()->json(['message' => 'Smart Campaign job dispatched.']);
+    }
+
     /**
      * Create a new AdCampaign.
      */
@@ -432,4 +457,6 @@ class AdsCampaignController extends Controller
 
         return response()->json(['keywords' => $keywords]);
     }
+
+    
 }

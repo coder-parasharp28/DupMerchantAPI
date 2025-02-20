@@ -124,5 +124,8 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     // Ad Campaigns
     Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContent']);
     Route::post('/merchant/v1/ads/campaigns/copy/generate-by-prompt', [AdsCampaignController::class, 'generateAdCopyByPrompt']);
+
+    // Dispatch the Smart Campaign job
+    Route::post('/merchant/v1/ads/campaigns/smart/dispatch', [AdsCampaignController::class, 'dispatchSmartCampaignJob']);
 });
 
