@@ -647,4 +647,101 @@ class AdsCampaignController extends Controller
             'localActionsMetrics' => $localActionsMetrics,
         ];
     }
+
+
+    /*
+     * Get Campaign Keyword Searches
+     */
+    public function getCampaignKeywordSearches($id, Request $request) 
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Get Campaign
+        $campaign = AdCampaign::where('id', $id)->first();
+
+        if (!$campaign) {
+            return response()->json(['error' => 'Campaign not found'], 404);
+        }
+
+        $merchantId = $campaign->merchant_id;
+        $locationId = $campaign->location_id;
+
+        // Get AdsIntegration
+        $adsIntegration = AdsIntegration::where('merchant_id', $merchantId)->where('location_id', $locationId)->first();
+
+        if (!$adsIntegration) {
+            return response()->json(['error' => 'Ads Integration not found'], 404);
+        }
+        
+        $customerId = (string) $adsIntegration->customer_id;
+        $mccId = (string) $adsIntegration->mcc_id;
+
+        // Get External Campaign ID
+        $externalCampaignId = (string) $campaign->external_id;
+
+        if (empty($externalCampaignId)) {
+            return [
+                'campaignKeywordSearches' => [],
+            ]; 
+        }
+
+        // Initialize the Google Ads client
+        $googleAdsClient = (new GoogleAdsClientBuilder())
+            ->withDeveloperToken(env('GOOGLE_ADS_DEVELOPER_TOKEN'))
+            ->withLoginCustomerId($mccId)
+            ->withOAuth2Credential(new UserRefreshCredentials(
+                ['https://www.googleapis.com/auth/adwords'],
+                [
+                    'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
+                    'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
+                    'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
+                ]
+            ))
+            ->build();
+
+        // Create the campaign query
+        $campaignKeywordSearchesQuery = sprintf(
+            "SELECT
+              campaign.id,
+              campaign.name,
+              metrics.clicks,
+              metrics.impressions,
+              metrics.cost_micros,
+              smart_campaign_search_term_view.search_term
+            FROM smart_campaign_search_term_view
+            WHERE campaign.id = %d AND metrics.clicks > 0
+            %s
+            ORDER BY metrics.clicks DESC
+            LIMIT 100",
+            $externalCampaignId,
+            (!is_null($startDate) && !is_null($endDate)) ? "AND segments.date >= '$startDate' AND segments.date <= '$endDate'" : ""
+        );
+
+        // Create the request objects
+        $campaignKeywordSearchesRequest = new SearchGoogleAdsStreamRequest([
+            'customer_id' => $customerId,
+            'query' => $campaignKeywordSearchesQuery,
+        ]);
+
+        // Execute the queries using the Google Ads service client
+        $googleAdsServiceClient = $googleAdsClient->getGoogleAdsServiceClient();
+
+        // Execute the campaign query
+        $campaignKeywordSearchesResponse = $googleAdsServiceClient->searchStream($campaignKeywordSearchesRequest);
+
+        $campaignKeywordSearches = [];
+        foreach ($campaignKeywordSearchesResponse->iterateAllElements() as $googleAdsRow) {
+
+            $campaignKeywordSearches[] = [
+                'searchTerm' => $googleAdsRow->getSmartCampaignSearchTermView()->getSearchTerm(),
+                'clicks' => $googleAdsRow->getMetrics()->getClicks(),
+                'impressions' => $googleAdsRow->getMetrics()->getImpressions(),
+                'costMicros' => $googleAdsRow->getMetrics()->getCostMicros(),
+            ];
+        }
+
+        return response()->json(['campaignKeywordSearches' => $campaignKeywordSearches]);
+    }
+    
 }
