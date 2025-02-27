@@ -211,6 +211,8 @@ class MerchantController extends Controller
             'country' => 'nullable|string|max:255',
             'zipcode' => 'nullable|string|max:20',
             'business_email' => 'required|email',
+            'min_avg_order_value' => 'nullable|numeric|min:0',
+            'max_avg_order_value' => 'nullable|numeric|min:0',
         ]);
 
         $merchant = Merchant::create($validatedData);
@@ -258,6 +260,8 @@ class MerchantController extends Controller
             'stripe_location_id' => $stripeLocation->id,
             'stripe_customer_id' => $stripeCustomer->id,
             'business_email' => $merchant->business_email,
+            'min_avg_order_value' => $validatedData['min_avg_order_value'],
+            'max_avg_order_value' => $validatedData['max_avg_order_value'],
         ]);
 
         return response()->json($merchant, 201);
