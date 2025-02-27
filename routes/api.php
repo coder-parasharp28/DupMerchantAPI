@@ -120,6 +120,7 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/ads/campaigns', [AdsCampaignController::class, 'getAdCampaigns']);
     Route::get('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'getAdCampaign']);
     Route::delete('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'deleteAdCampaign']);
+    Route::get('/merchant/v1/ads/campaigns/{id}/metrics', [AdsCampaignController::class, 'getCampaignMetrics']);
 
     // Ad Campaigns
     Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContent']);

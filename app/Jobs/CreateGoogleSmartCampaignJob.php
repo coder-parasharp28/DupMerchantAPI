@@ -152,6 +152,12 @@ class CreateGoogleSmartCampaignJob implements ShouldQueue
             // Extract the campaign ID from the response
             $campaignId = $response->getMutateOperationResponses()[0]->getCampaignResult()->getResourceName();
 
+            // Extract the campaign ID from the response - customers/2472425197/campaigns/22262880854
+            $campaignIdParts = explode('/', $campaignId);
+            if (count($campaignIdParts) === 4) {
+                $campaignId = $campaignIdParts[3];
+            }
+
             Log::info('Smart Campaign created successfully for AdCampaign ID: ' . $adCampaign->id);
 
             // Update the AdCampaign with the external_id and set the processing status to 'completed'

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AdCampaign;
 use App\Models\AdsGoogleBusinessProfile;
+use App\Models\AdsIntegration;
 use App\Models\Merchant;
 use App\Models\Location;
 use App\Models\Item;
@@ -11,6 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use OpenAI;
 use App\Jobs\CreateGoogleSmartCampaignJob;
+use Google\Ads\GoogleAds\V18\Services\GoogleAdsServiceClient;
+use Google\Ads\GoogleAds\Lib\V18\GoogleAdsClientBuilder;
+use Google\Auth\Credentials\UserRefreshCredentials;
+use Google\Ads\GoogleAds\V18\Services\SearchGoogleAdsStreamRequest;
 
 class AdsCampaignController extends Controller
 {
@@ -138,22 +143,62 @@ class AdsCampaignController extends Controller
         $merchantId = $request->query('merchantId');
         $locationId = $request->query('locationId');
 
+        $location = Location::where('merchant_id', $merchantId)->where('id', $locationId)->first();
+
+        if (!$location) {
+            return response()->json(['error' => 'Location not found'], 404);
+        }
+        
         $adCampaigns = AdCampaign::where('merchant_id', $merchantId)
             ->where('location_id', $locationId)
             ->get();
 
         foreach ($adCampaigns as $adCampaign) {
-            $adCampaign->roas = 0;
-            $adCampaign->impressions = 0;
-            $adCampaign->clicks = 0;
-            $adCampaign->conversions = 0;
-            $adCampaign->revenue = 0;
-            $adCampaign->ad_spend = 0;
-            $adCampaign->store_visits = 0;
-            $adCampaign->phone_calls = 0;
-            $adCampaign->direction_views = 0;
-            $adCampaign->website_visits = 0;
-            $adCampaign->other = 0;
+
+            $campaignMetrics = $this->getCampaignMetrics($adCampaign->id, $request);
+
+            if (empty($campaignMetrics['campaignMetrics'])) {
+                $adCampaign->impressions = 0;
+                $adCampaign->clicks = 0;
+                $adCampaign->conversions = 0;
+                $adCampaign->ad_spend = 0;
+            } else {
+                $adCampaign->impressions = $campaignMetrics['campaignMetrics'][0]['impressions'];
+                $adCampaign->clicks = $campaignMetrics['campaignMetrics'][0]['clicks'];
+                $adCampaign->conversions = $campaignMetrics['campaignMetrics'][0]['allConversionsValue'];
+                $adCampaign->ad_spend = round($campaignMetrics['campaignMetrics'][0]['costMicros'] / 1000000, 2);
+            }
+
+            if (empty($campaignMetrics['localActionsMetrics'])) {
+                $adCampaign->store_visits = 0;
+                $adCampaign->phone_calls = 0;
+                $adCampaign->direction_views = 0;
+                $adCampaign->website_visits = 0;
+                $adCampaign->other = 0;
+            } else {
+                $adCampaign->store_visits = $campaignMetrics['localActionsMetrics'][0]['storeVisits'];
+                $adCampaign->phone_calls = $campaignMetrics['localActionsMetrics'][0]['clickToCall'];
+                $adCampaign->direction_views = $campaignMetrics['localActionsMetrics'][0]['directions'];
+                $adCampaign->website_visits = $campaignMetrics['localActionsMetrics'][0]['website'];
+                $adCampaign->other = $campaignMetrics['localActionsMetrics'][0]['otherEngagement'];
+            }
+
+
+            $totalConversions = $adCampaign->store_visits + $adCampaign->phone_calls + $adCampaign->direction_views + $adCampaign->website_visits + $adCampaign->other;
+            $estimatedConversion = round($totalConversions * 0.4);
+            
+            if ($adCampaign->ad_spend > 0) {
+                $adCampaign->roasLow = round(($location->min_avg_order_value * $estimatedConversion) / $adCampaign->ad_spend, 2);
+                $adCampaign->roasHigh = round(($location->max_avg_order_value * $estimatedConversion) / $adCampaign->ad_spend, 2);
+                $adCampaign->revenueLow = round($estimatedConversion * $location->min_avg_order_value, 2);
+                $adCampaign->revenueHigh = round($estimatedConversion * $location->max_avg_order_value, 2);
+            } else {
+                $adCampaign->roasLow = 0;
+                $adCampaign->roasHigh = 0;
+                $adCampaign->revenueLow = 0;
+                $adCampaign->revenueHigh = 0;
+            }
+
         }
 
         return response()->json($adCampaigns);
@@ -458,5 +503,148 @@ class AdsCampaignController extends Controller
         return response()->json(['keywords' => $keywords]);
     }
 
-    
+    /*
+     * Get Campaign Metrics
+     */
+    public function getCampaignMetrics($id, Request $request)
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        // Get Campaign
+        $campaign = AdCampaign::where('id', $id)->first();
+
+        if (!$campaign) {
+            return response()->json(['error' => 'Campaign not found'], 404);
+        }
+
+        $merchantId = $campaign->merchant_id;
+        $locationId = $campaign->location_id;
+
+        // Get AdsIntegration
+        $adsIntegration = AdsIntegration::where('merchant_id', $merchantId)->where('location_id', $locationId)->first();
+
+        if (!$adsIntegration) {
+            return response()->json(['error' => 'Ads Integration not found'], 404);
+        }
+
+        $customerId = (string) $adsIntegration->customer_id;
+        $mccId = (string) $adsIntegration->mcc_id;
+
+        // Get External Campaign ID
+        $externalCampaignId = (string) $campaign->external_id;
+
+        if (empty($externalCampaignId)) {
+            return [
+                'campaignMetrics' => [],
+                'localActionsMetrics' => [],
+            ]; 
+        }
+
+        // Initialize the Google Ads client
+        $googleAdsClient = (new GoogleAdsClientBuilder())
+            ->withDeveloperToken(env('GOOGLE_ADS_DEVELOPER_TOKEN'))
+            ->withLoginCustomerId($mccId)
+            ->withOAuth2Credential(new UserRefreshCredentials(
+                ['https://www.googleapis.com/auth/adwords'],
+                [
+                    'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
+                    'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
+                    'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
+                ]
+            ))
+            ->build();
+
+        // Create the campaign query
+        $campaignQuery = sprintf(
+            "SELECT
+                campaign.id,
+                campaign.name,
+                campaign.status,
+                campaign_budget.id,
+                campaign_budget.amount_micros,
+                metrics.impressions,
+                metrics.clicks,
+                metrics.ctr,
+                metrics.average_cpc,
+                metrics.cost_micros,
+                metrics.all_conversions_value
+            FROM campaign
+            WHERE campaign.id = %d
+            %s",
+            $externalCampaignId,
+            (!is_null($startDate) && !is_null($endDate)) ? "AND segments.date >= '$startDate' AND segments.date <= '$endDate'" : ""
+        );
+
+        // Create the local actions query
+        $localActionsQuery = sprintf(
+            "SELECT
+                metrics.all_conversions_from_location_asset_click_to_call,
+                metrics.all_conversions_from_location_asset_directions,
+                metrics.all_conversions_from_location_asset_menu,
+                metrics.all_conversions_from_location_asset_order,
+                metrics.all_conversions_from_location_asset_website,
+                metrics.all_conversions_from_location_asset_store_visits,
+                metrics.all_conversions_from_location_asset_other_engagement
+            FROM campaign
+            WHERE campaign.id = %d",
+            $externalCampaignId
+        );
+
+        // Create the request objects
+        $campaignRequest = new SearchGoogleAdsStreamRequest([
+            'customer_id' => $customerId,
+            'query' => $campaignQuery,
+        ]);
+
+        $localActionsRequest = new SearchGoogleAdsStreamRequest([
+            'customer_id' => $customerId,
+            'query' => $localActionsQuery,
+        ]);
+
+        // Execute the queries using the Google Ads service client
+        $googleAdsServiceClient = $googleAdsClient->getGoogleAdsServiceClient();
+
+        // Execute the campaign query
+        $campaignResponse = $googleAdsServiceClient->searchStream($campaignRequest);
+
+        // Execute the local actions query
+        $localActionsResponse = $googleAdsServiceClient->searchStream($localActionsRequest);
+
+        // Process the responses and return the results
+        $campaignMetrics = [];
+        foreach ($campaignResponse->iterateAllElements() as $googleAdsRow) {
+            $campaignMetrics[] = [
+                'campaignId' => $googleAdsRow->getCampaign()->getId(),
+                'campaignName' => $googleAdsRow->getCampaign()->getName(),
+                'status' => $googleAdsRow->getCampaign()->getStatus(),
+                'budgetId' => $googleAdsRow->getCampaignBudget()->getId(),
+                'budgetAmountMicros' => $googleAdsRow->getCampaignBudget()->getAmountMicros(),
+                'impressions' => $googleAdsRow->getMetrics()->getImpressions(),
+                'clicks' => $googleAdsRow->getMetrics()->getClicks(),
+                'ctr' => $googleAdsRow->getMetrics()->getCtr(),
+                'averageCpc' => $googleAdsRow->getMetrics()->getAverageCpc(),
+                'costMicros' => $googleAdsRow->getMetrics()->getCostMicros(),
+                'allConversionsValue' => $googleAdsRow->getMetrics()->getAllConversionsValue(),
+            ];
+        }
+
+        $localActionsMetrics = [];
+        foreach ($localActionsResponse->iterateAllElements() as $googleAdsRow) {
+            $localActionsMetrics[] = [
+                'clickToCall' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetClickToCall(),
+                'directions' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetDirections(),
+                'menu' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetMenu(),
+                'order' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetOrder(),
+                'website' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetWebsite(),
+                'storeVisits' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetStoreVisits(),
+                'otherEngagement' => $googleAdsRow->getMetrics()->getAllConversionsFromLocationAssetOtherEngagement(),
+            ];
+        }
+
+        return [
+            'campaignMetrics' => $campaignMetrics,
+            'localActionsMetrics' => $localActionsMetrics,
+        ];
+    }
 }
