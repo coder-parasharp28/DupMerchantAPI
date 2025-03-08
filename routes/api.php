@@ -129,5 +129,8 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
 
     // Dispatch the Smart Campaign job
     Route::post('/merchant/v1/ads/campaigns/smart/dispatch', [AdsCampaignController::class, 'dispatchSmartCampaignJob']);
+
+    // Invite Admin to Google Business Profile
+    Route::post('/merchant/v1/ads/integrations/google-my-business/accounts/locations/invite-admin', [AdsController::class, 'inviteAdminToGoogleBusinessProfile']);
 });
 

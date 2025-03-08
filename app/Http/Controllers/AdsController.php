@@ -394,6 +394,38 @@ class AdsController extends Controller
     }
 
     /*
+    * TEMPORARY: Invite Admin to Google Business Profile
+    */
+    public function inviteAdminToGoogleBusinessProfile(Request $request)
+    {
+
+        $superAdminPassword = $request->input('super_admin_password');
+
+        if ($superAdminPassword !== env('SUPER_ADMIN_PASSWORD')) {
+            return response()->json(['error' => 'Invalid super admin password'], 401);
+        }
+
+        // Get all Ads Integrations
+        $adsIntegrations = AdsIntegration::all();
+
+        foreach ($adsIntegrations as $adsIntegration) {
+            // Get Ads Google Business Profile
+            $adsGoogleBusinessProfile = AdsGoogleBusinessProfile::where('ads_integration_id', $adsIntegration->id)
+                                            ->first();
+
+            if (!$adsGoogleBusinessProfile) {
+                continue;
+            }
+
+            dispatch(new InviteAdminToGBPJob($adsIntegration, $adsGoogleBusinessProfile));
+        }
+
+        return response()->json(['message' => 'Admins invited successfully'], 200);
+
+    }
+
+    
+    /*
     * Create a Google Ads Account
     */
     public function createGoogleAdsAccount(Request $request)
