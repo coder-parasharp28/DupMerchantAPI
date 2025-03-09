@@ -183,9 +183,9 @@ class AdsCampaignController extends Controller
                 $adCampaign->other = $campaignMetrics['localActionsMetrics'][0]['otherEngagement'];
             }
 
-
-            $totalConversions = $adCampaign->store_visits + $adCampaign->phone_calls + $adCampaign->direction_views + $adCampaign->website_visits + $adCampaign->other;
-            $estimatedConversion = round($totalConversions * 0.4);
+            // find the largest value between store_visits, phone_calls, direction_views, website_visits, other
+            $totalConversions = max([$adCampaign->store_visits, $adCampaign->phone_calls, $adCampaign->direction_views, $adCampaign->website_visits, $adCampaign->other]);
+            $estimatedConversion = round($totalConversions * 0.3);
             
             if ($adCampaign->ad_spend > 0) {
                 $adCampaign->roasLow = round(($location->min_avg_order_value * $estimatedConversion) / $adCampaign->ad_spend, 2);
