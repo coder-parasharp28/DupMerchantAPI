@@ -40,6 +40,12 @@ class Customer extends Model
         'birth_date',
         'company',
         'reference',
+        'billing_address_line_1',
+        'billing_address_line_2',
+        'billing_city',
+        'billing_state',
+        'billing_zip',
+        'billing_country'
     ];
 
     /**

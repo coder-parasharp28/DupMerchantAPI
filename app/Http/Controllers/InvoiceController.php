@@ -19,7 +19,15 @@ class InvoiceController extends Controller
             'merchant_id' => 'required|uuid',
             'location_id' => 'required|uuid',
             'customer_id' => 'required|uuid',
+            'billing_address_line_1' => 'nullable|string',
+            'billing_address_line_2' => 'nullable|string',
+            'billing_city' => 'nullable|string',
+            'billing_state' => 'nullable|string',
+            'billing_zip' => 'nullable|string',
+            'billing_country' => 'nullable|string',
             'invoice_date' => 'nullable|date',
+            'invoice_number' => 'nullable|string',
+            'po_number' => 'nullable|string',
             'due_date' => 'nullable|date',
             'payer_memo' => 'nullable|string',
             'internal_note' => 'nullable|string',
@@ -31,6 +39,13 @@ class InvoiceController extends Controller
             'invoice_items.*.item_variation_id' => 'required|uuid',
             'invoice_items.*.quantity' => 'required|integer',
         ]);
+
+        if (!isset($validatedData['invoice_number'])) {
+            $count = Invoice::where('merchant_id', $validatedData['merchant_id'])
+                            ->where('location_id', $validatedData['location_id'])
+                            ->count();
+            $validatedData['invoice_number'] = 'INV-' . str_pad($count + 110000, 6, '0', STR_PAD_LEFT);
+        }
 
         $invoice = Invoice::create($validatedData);
 
@@ -97,7 +112,15 @@ class InvoiceController extends Controller
             'merchant_id' => 'uuid',
             'location_id' => 'uuid',
             'customer_id' => 'uuid',
+            'billing_address_line_1' => 'nullable|string',
+            'billing_address_line_2' => 'nullable|string',
+            'billing_city' => 'nullable|string',
+            'billing_state' => 'nullable|string',
+            'billing_zip' => 'nullable|string',
+            'billing_country' => 'nullable|string',
             'invoice_date' => 'date',
+            'invoice_number' => 'nullable|string',
+            'po_number' => 'nullable|string',
             'due_date' => 'date',
             'payer_memo' => 'nullable|string',
             'internal_note' => 'nullable|string',

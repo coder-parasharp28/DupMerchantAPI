@@ -59,6 +59,12 @@ class CustomerController extends Controller
             'birth_date' => 'nullable|date',
             'company' => 'nullable|string|max:255',
             'reference' => 'nullable|string|max:255',
+            'billing_address_line_1' => 'nullable|string|max:255',
+            'billing_address_line_2' => 'nullable|string|max:255',
+            'billing_city' => 'nullable|string|max:255',
+            'billing_state' => 'nullable|string|max:255',
+            'billing_zip' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:255',
         ]);
 
         $customer = Customer::create($validatedData);
@@ -99,6 +105,12 @@ class CustomerController extends Controller
             'birth_date' => 'nullable|date',
             'company' => 'nullable|string|max:255',
             'reference' => 'nullable|string|max:255',
+            'billing_address_line_1' => 'nullable|string|max:255',
+            'billing_address_line_2' => 'nullable|string|max:255',
+            'billing_city' => 'nullable|string|max:255',
+            'billing_state' => 'nullable|string|max:255',
+            'billing_zip' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:255',
         ]);
 
         $customer->update($validatedData);
