@@ -14,6 +14,7 @@ use App\Http\Controllers\AdsCampaignController;
 use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\MerchantBalanceController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\InvoiceController;
 
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
@@ -85,6 +86,13 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
 
     // Reconciliation
     Route::post('/merchant/v1/reconciliation/dispatch-daily', [ReconciliationController::class, 'dispatchDailyJob']);
+
+    // Invoices
+    Route::post('/merchant/v1/invoices', [InvoiceController::class, 'createInvoice']);
+    Route::get('/merchant/v1/invoices/{invoiceId}', [InvoiceController::class, 'getInvoice']);
+    Route::put('/merchant/v1/invoices/{invoiceId}', [InvoiceController::class, 'updateInvoice']);
+    Route::delete('/merchant/v1/invoices/{invoiceId}', [InvoiceController::class, 'deleteInvoice']);
+    Route::get('/merchant/v1/invoices/merchant/{merchantId}/location/{locationId}', [InvoiceController::class, 'getAllInvoicesByMerchantAndLocation']);
 
     // Route to get weekly metrics
     Route::get('/merchant/v1/transactions/metrics', [TransactionController::class, 'getWeeklyMetrics']);
