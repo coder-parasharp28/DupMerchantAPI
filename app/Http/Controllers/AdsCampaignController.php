@@ -38,9 +38,14 @@ class AdsCampaignController extends Controller
         }
 
         // Dispatch the job
-        CreateGoogleSmartCampaignJob::dispatch();
+        $job = new CreateGoogleSmartCampaignJob();
+        $result = $job->handle();
 
-        return response()->json(['message' => 'Smart Campaign job dispatched.']);
+        if ($result) {
+            return response()->json(['message' => 'Smart Campaign job dispatched.', 'result' => $result]);
+        } else {
+            return response()->json(['error' => 'Smart Campaign job failed.', 'result' => $result], 500);
+        }
     }
 
     /**
