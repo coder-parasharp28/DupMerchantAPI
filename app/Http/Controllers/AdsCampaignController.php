@@ -68,6 +68,7 @@ class AdsCampaignController extends Controller
             'headline3' => 'nullable|string|max:255',
             'description1' => 'required|string|max:255',
             'description2' => 'nullable|string|max:255',
+            'description3' => 'nullable|string|max:255',
             'landing_page_url' => 'nullable|url',
             'stripe_price_id' => 'required|string|max:255',
         ]);
@@ -95,8 +96,8 @@ class AdsCampaignController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
             'budget' => 'sometimes|required|numeric|min:0',
-            'status' => 'sometimes|required|in:draft,active,paused,completed',
-            'type' => 'sometimes|required|in:search,display,video',
+            'status' => 'sometimes|required|in:draft,learning,active,paused,completed',
+            'type' => 'sometimes|required|in:smart,pmax,search,display,video',
             'goal' => 'sometimes|required|in:awareness,consideration,conversion',
             'address_line_1' => 'sometimes|required|string|max:255',
             'address_line_2' => 'nullable|string|max:255',
@@ -109,17 +110,13 @@ class AdsCampaignController extends Controller
             'headline3' => 'nullable|string|max:255',
             'description1' => 'sometimes|required|string|max:255',
             'description2' => 'nullable|string|max:255',
-            'landing_page_url' => 'sometimes|required|url',
+            'description3' => 'nullable|string|max:255',
+            'landing_page_url' => 'nullable|url',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
-        // Cannot update stripe related fields
-        $validator->offsetUnset('stripe_price_id');
-        $validator->offsetUnset('stripe_checkout_session_id');
-        $validator->offsetUnset('stripe_subscription_id');
 
         $adCampaign->update($validator->validated());
 

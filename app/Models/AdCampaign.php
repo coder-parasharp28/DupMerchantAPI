@@ -39,6 +39,7 @@ class AdCampaign extends Model
         'headline3',
         'description1',
         'description2',
+        'description3',
         'landing_page_url',
     ];
 
