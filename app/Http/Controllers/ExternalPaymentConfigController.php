@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Square\SquareClient;
+use Square\Environments;
 use Square\OAuth\Requests\ObtainTokenRequest;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ExternalPaymentConfig;
@@ -59,7 +60,10 @@ class ExternalPaymentConfigController extends Controller
 
         // Exchange the code for an access token
         $client = new SquareClient(
-            token: env('SQUARE_PERSONAL_ACCESS_TOKEN')
+            token: env('SQUARE_PERSONAL_ACCESS_TOKEN'),
+            options: [
+                'baseUrl' => Environments::Sandbox->value,
+            ]
         );
         $response = $client->oAuth->obtainToken(
             new ObtainTokenRequest([
