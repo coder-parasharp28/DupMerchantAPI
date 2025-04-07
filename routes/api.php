@@ -15,6 +15,7 @@ use App\Http\Controllers\ReconciliationController;
 use App\Http\Controllers\MerchantBalanceController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\ExternalPaymentConfigController;
 
 // Put all routes that go through API Gateway in this middleware
 Route::middleware([VerifyGatewaySecret::class])->group(function () {
@@ -140,5 +141,12 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
 
     // Invite Admin to Google Business Profile
     Route::post('/merchant/v1/ads/integrations/google-my-business/accounts/locations/invite-admin', [AdsController::class, 'inviteAdminToGoogleBusinessProfile']);
+
+    // External Payment Config
+    Route::get('/merchant/v1/external-payment-configs/square/connect', [ExternalPaymentConfigController::class, 'getSquareConnectUrl']);
+    Route::post('/merchant/v1/external-payment-configs/square/connect/finish', [ExternalPaymentConfigController::class, 'getSquareAccessToken']);
+
+    Route::get('/merchant/v1/external-payment-config/merchant/{merchantId}/location/{locationId}', [ExternalPaymentConfigController::class, 'getExternalPaymentConfig']);
+
 });
 
