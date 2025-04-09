@@ -124,13 +124,17 @@ class ExternalPaymentConfigController extends Controller
 
         $orders = [];
         foreach ($locations->getLocations() as $location) {
-            $orders = array_merge($orders, $client->orders->search(
+            $locationOrders = $client->orders->search(
                 new SearchOrdersRequest([
                     'locationIds' => [
                         $location->getId(),
                     ],
                 ]),
-            )->getOrders());
+            )->getOrders();
+            
+            if ($locationOrders && count($locationOrders) > 0) {
+                $orders = array_merge($orders, $locationOrders);
+            }
         }
 
         return response()->json($orders);
