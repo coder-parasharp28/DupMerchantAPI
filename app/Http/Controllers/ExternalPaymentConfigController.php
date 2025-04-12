@@ -131,7 +131,7 @@ class ExternalPaymentConfigController extends Controller
                     ],
                 ]),
             )->getOrders();
-            
+
             if ($locationOrders && count($locationOrders) > 0) {
                 $orders = array_merge($orders, $locationOrders);
             }
@@ -168,7 +168,15 @@ class ExternalPaymentConfigController extends Controller
             new ListCustomersRequest([]),
         );
 
-        // Assuming the response has a method to get the result
-        return response()->json($response);
+        $customers = [];
+        if ($response && $response->getPages()) {
+            foreach ($response->getPages() as $page) {
+                $customers = array_merge($customers, $page->getItems());
+            }
+        }
+
+        return response()->json($customers);
+
+
     }
 }
