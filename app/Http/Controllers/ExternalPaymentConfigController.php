@@ -98,6 +98,18 @@ class ExternalPaymentConfigController extends Controller
         return response()->json($externalPaymentConfig);    
     }
 
+    // Disconnect external payment config
+    public function disconnectExternalPaymentConfig($externalPaymentConfigId)
+    {
+        $externalPaymentConfig = ExternalPaymentConfig::find($externalPaymentConfigId);
+
+        if (!$externalPaymentConfig) {
+            return response()->json(['error' => 'External payment config not found'], 404);
+        }
+
+        $externalPaymentConfig->delete();
+    }
+
     /*
     * Get Square Orders
     */

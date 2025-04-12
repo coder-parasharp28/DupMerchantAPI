@@ -149,6 +149,6 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::get('/merchant/v1/external-payment-config/merchant/{merchantId}/location/{locationId}', [ExternalPaymentConfigController::class, 'getExternalPaymentConfig']);
     Route::get('/merchant/v1/external-payment-config/merchant/{merchantId}/location/{locationId}/square/orders', [ExternalPaymentConfigController::class, 'getSquareOrders']);
     Route::get('/merchant/v1/external-payment-config/merchant/{merchantId}/location/{locationId}/square/customers', [ExternalPaymentConfigController::class, 'getSquareCustomers']);
-
+    Route::delete('/merchant/v1/external-payment-config/{externalPaymentConfigId}', [ExternalPaymentConfigController::class, 'disconnectExternalPaymentConfig']);
 });
 
