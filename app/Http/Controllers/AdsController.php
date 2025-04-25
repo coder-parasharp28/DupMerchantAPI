@@ -303,7 +303,7 @@ class AdsController extends Controller
 
                 // Check if the current user is a PRIMARY_OWNER or OWNER
                 foreach ($admins as $admin) {
-                    if (isset($admin['account']) && $admin['account'] === $accountId && in_array($admin['role'], ['PRIMARY_OWNER', 'OWNER', 'MANAGER'])) {
+                    if (isset($admin['account']) && $admin['account'] === $accountId && in_array($admin['role'], ['PRIMARY_OWNER', 'OWNER'])) {
                         $filteredLocations[] = $location;
                         break; // No need to check further admins for this location
                     }
