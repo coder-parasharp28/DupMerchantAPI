@@ -24,7 +24,9 @@ class Location extends Model
         'stripe_location_id',
         'stripe_customer_id',
         'min_avg_order_value',
-        'max_avg_order_value'
+        'max_avg_order_value',
+        'entitlement_pie_payments_enabled',
+        'entitlement_pie_ads_enabled'
     ];
 
     public $incrementing = false;
