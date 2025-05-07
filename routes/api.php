@@ -27,6 +27,9 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::put('/merchant/v1/merchants/{id}', [MerchantController::class, 'update']);
     Route::delete('/merchant/v1/merchants/{id}', [MerchantController::class, 'destroy']);
 
+    // Add Member to Merchant
+    Route::post('/merchant/v1/merchants/{merchantId}/members', [MerchantController::class, 'addMember']);
+
     // Payout routes
     Route::post('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'createPayout']);
     Route::get('/merchant/v1/merchants/{merchantId}/payout', [MerchantController::class, 'getPayout']);

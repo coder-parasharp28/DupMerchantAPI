@@ -267,6 +267,42 @@ class MerchantController extends Controller
         return response()->json($merchant, 201);
     }
 
+    // Add Member to Merchant
+    public function addMember(Request $request, $merchantId)
+    {
+
+        $ownerId = $request->header('X-USER-ID');
+
+        $merchant = Merchant::findOrFail($merchantId);
+
+        // Check if the owner is the owner of the merchant
+        $merchantMember = $merchant->members()->where('user_id', $ownerId)->where('role', MerchantMember::ROLE_OWNER)->first();
+        if (!$merchantMember) {
+            return response()->json(['error' => 'You are not the owner of this merchant'], 403);
+        }
+
+        $validatedData = $request->validate([
+            'user_id' => 'required|string|max:255',
+            'role' => 'required|string|max:255',
+        ]);
+
+        // Check if the user is already a member of the merchant
+        $existingMember = $merchant->members()->where('user_id', $validatedData['user_id'])->first();
+        if ($existingMember) {
+            return response()->json(['error' => 'User is already a member of this merchant'], 400);
+        }
+
+        $merchantMember = MerchantMember::create([
+            'merchant_id' => $merchant->id,
+            'user_id' => $validatedData['user_id'],
+            'role' => $validatedData['role'],
+            'is_activated' => true
+        ]);
+
+        // TODO: Send email to the new member and then activate the member
+        return response()->json($merchantMember, 201);
+    }
+
     // Retrieve a specific merchant
     public function show(Request $request, $id)
     {
