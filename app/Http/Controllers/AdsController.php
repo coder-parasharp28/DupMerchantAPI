@@ -497,6 +497,14 @@ class AdsController extends Controller
                 'mcc_id' => $mccId,
                 'ads_account_creation_status' => 'completed',
             ]);
+
+            // Log to Slack with additional details
+            Log::channel('slack')->info('Merchant Successfully Onboarded on Google Ads', [
+                'Merchant Location Name' => $location->name . ' - ' . $location->city,
+                'Merchant Location ID' => $request->location_id,
+                'Google Ads Account ID' => $customerId,
+                'timestamp' => now()->toDateTimeString(),
+            ]);
         }
 
         $adsIntegration = $adsIntegration->makeHidden(['access_token', 'refresh_token', 'expires_in']);
