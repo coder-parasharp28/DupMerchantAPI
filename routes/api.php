@@ -134,10 +134,15 @@ Route::middleware([VerifyGatewaySecret::class])->group(function () {
     Route::delete('/merchant/v1/ads/campaigns/{id}', [AdsCampaignController::class, 'deleteAdCampaign']);
     Route::get('/merchant/v1/ads/campaigns/{id}/metrics', [AdsCampaignController::class, 'getCampaignMetrics']);
     Route::get('/merchant/v1/ads/campaigns/{id}/keyword-searches', [AdsCampaignController::class, 'getCampaignKeywordSearches']);
+    Route::delete('/merchant/v1/ads/campaigns/{id}/keywords/{keywordId}', [AdsCampaignController::class, 'deleteAdCampaignKeyword']);
+    Route::post('/merchant/v1/ads/campaigns/{id}/keywords', [AdsCampaignController::class, 'createAdCampaignKeyword']);
 
     // Ad Campaigns
-    Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContent']);
+    Route::post('/merchant/v1/ads/campaigns/copy/generate', [AdsCampaignController::class, 'generateAdContentUsingItems']);
     Route::post('/merchant/v1/ads/campaigns/copy/generate-by-prompt', [AdsCampaignController::class, 'generateAdCopyByPrompt']);
+    Route::post('/merchant/v1/ads/campaigns/copy/generate-related-keywords', [AdsCampaignController::class, 'generateRelatedKeywords']);
+    Route::post('/merchant/v1/ads/campaigns/copy/generate-adjacent-keywords', [AdsCampaignController::class, 'generateAdjacentKeywords']);
+    Route::post('/merchant/v1/ads/campaigns/copy/generate-competitor-keywords', [AdsCampaignController::class, 'generateCompetitorKeywords']);
 
     // Dispatch the Smart Campaign job
     Route::post('/merchant/v1/ads/campaigns/smart/dispatch', [AdsCampaignController::class, 'dispatchSmartCampaignJob']);

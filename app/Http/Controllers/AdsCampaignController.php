@@ -71,6 +71,7 @@ class AdsCampaignController extends Controller
             'description3' => 'nullable|string|max:255',
             'landing_page_url' => 'nullable|url',
             'stripe_price_id' => 'required|string|max:255',
+            'keywords' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -78,6 +79,16 @@ class AdsCampaignController extends Controller
         }
 
         $adCampaign = AdCampaign::create($validator->validated());
+
+        if ($request->has('keywords')) {
+            foreach ($request->keywords as $keyword) {
+                AdCampaignKeyword::create([
+                    'ad_campaign_id' => $adCampaign->id,
+                    'keyword' => $keyword,
+                    'keyword_type' => 'keyword',
+                ]);
+            }
+        }
 
         return response()->json($adCampaign, 201);
     }
@@ -112,6 +123,7 @@ class AdsCampaignController extends Controller
             'description2' => 'nullable|string|max:255',
             'description3' => 'nullable|string|max:255',
             'landing_page_url' => 'nullable|url',
+            'keywords' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -121,6 +133,52 @@ class AdsCampaignController extends Controller
         $adCampaign->update($validator->validated());
 
         return response()->json($adCampaign);
+    }
+
+    /*
+     * Delete AdCampaign Keywords
+     */
+    public function deleteAdCampaignKeywords(Request $request, $id, $keywordId)
+    {
+        $adCampaignKeyword = AdCampaignKeyword::find($keywordId);
+
+        if (!$adCampaignKeyword) {
+            return response()->json(['error' => 'AdCampaignKeyword not found'], 404);
+        }
+
+        $adCampaignKeyword->delete();
+
+        return response()->json(['message' => 'AdCampaignKeyword deleted successfully']);
+    }
+
+    /*
+     * Create AdCampaign Keywords
+     */
+    public function createAdCampaignKeywords(Request $request, $id)
+    {
+        $adCampaign = AdCampaign::find($id);
+
+        if (!$adCampaign) {
+            return response()->json(['error' => 'AdCampaign not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [ 
+            'keywords' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        foreach ($request->keywords as $keyword) {
+            AdCampaignKeyword::create([
+                'ad_campaign_id' => $adCampaign->id,
+                'keyword' => $keyword,
+                'keyword_type' => 'keyword',
+            ]);
+        }
+
+        return response()->json(['message' => 'AdCampaignKeywords created successfully']);
     }
 
     /**
@@ -148,6 +206,7 @@ class AdsCampaignController extends Controller
         
         $adCampaigns = AdCampaign::where('merchant_id', $merchantId)
             ->where('location_id', $locationId)
+            ->with('keywords')
             ->get();
 
         foreach ($adCampaigns as $adCampaign) {
@@ -246,7 +305,7 @@ class AdsCampaignController extends Controller
     /**
      * Generate headlines and descriptions using OpenAI.
      */
-    public function generateAdContent(Request $request)
+    public function generateAdContentUsingItems(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'merchant_id' => 'required|exists:merchants,id',
@@ -433,9 +492,9 @@ class AdsCampaignController extends Controller
     }
 
     /*
-     * Generate Ad Copy using Google Ads API
+     * Generate Keywords using user prompt
      */
-    public function generateKeywordSuggestionsByPrompt(Request $request)
+    public function generateRelatedKeywords(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'prompt' => 'string|nullable|max:255',
@@ -480,7 +539,7 @@ class AdsCampaignController extends Controller
             ],
             [
                 'role' => 'user',
-                'content' => "Generate 3 keywords (30 characters or less) for a Google Ads campaign for a merchant who describes thier business as : " . $prompt . ". Ensure 3 keywords are always generated. Do not include any other text in your response. Also dont include \"\" or any wildcards in your response.",
+                'content' => "Generate 10 keywords (30 characters or less) for a Google Ads campaign for a merchant who describes thier business as : " . $prompt . ". Ensure 3 keywords are always generated. Do not include any other text in your response. Also dont include \"\" or any wildcards in your response.",
             ],
         ];
 
@@ -496,6 +555,136 @@ class AdsCampaignController extends Controller
 
         // Parse the generated text into keywords
         $keywords = explode("\n", trim($generatedText));
+
+        // Trim each keyword to remove any leading or trailing whitespace
+        $keywords = array_map('trim', $keywords);
+
+        return response()->json(['keywords' => $keywords]);
+    }
+
+    /*
+     * Generate Adjacent Keywords
+     */
+    public function generateAdjacentKeywords(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'prompt' => 'string|nullable|max:255',
+            'merchant_id' => 'required|exists:merchants,id',
+            'location_id' => 'required|exists:locations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $prompt = $request->prompt;
+        $merchantId = $request->merchant_id;
+        $locationId = $request->location_id;
+        
+        if (empty($prompt)) {
+            // Get Google Business Profile
+            $googleBusinessProfile = AdsGoogleBusinessProfile::where('merchant_id', $merchantId)->where('location_id', $locationId)->first();
+
+            if (!$googleBusinessProfile) {
+                return response()->json(['error' => 'Google Business Profile not found'], 404);
+            }
+
+            $gbpObject = json_decode($googleBusinessProfile->google_business_profile_object, true);
+            $category = '';
+
+            if (isset($gbpObject['categories']) && isset($gbpObject['categories']['primaryCategory'])) {
+                $category = $gbpObject['categories']['primaryCategory']['displayName'];
+            }
+
+            if (empty($category)) {
+                return response()->json(['keywords' => []]);
+            }
+
+            $prompt = $category;
+        }
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a helpful assistant that generates ad content.',
+            ],
+            [
+                'role' => 'user',
+                'content' => "Generate 10 adjacent keywords (30 characters or less) for a Google Ads campaign for a merchant who describes thier business as : " . $prompt . ". An example of an adjacent keyword is 'relaxing music' if the prompt has a massage in it. Ensure 3 adjacent keywords are always generated. Do not include any other text in your response. Also dont include \"\" or any wildcards in your response.",
+            ],
+        ];
+
+        // Initialize OpenAI client using the factory method
+        $openAIClient = OpenAI::client(env('OPENAI_API_KEY'));
+
+        $response = $openAIClient->chat()->create([
+            'model' => 'gpt-4o',
+            'messages' => $messages,
+        ]);
+
+        $generatedText = $response['choices'][0]['message']['content'];
+
+        // Parse the generated text into keywords
+        $keywords = explode("\n", trim($generatedText));
+
+        // Trim each keyword to remove any leading or trailing whitespace
+        $keywords = array_map('trim', $keywords);
+
+        return response()->json(['keywords' => $keywords]);
+    }
+
+    /*
+     * Generate Competitor Keywords
+     */
+    public function generateCompetitorKeywords(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'merchant_id' => 'required|exists:merchants,id',
+            'location_id' => 'required|exists:locations,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $merchantId = $request->merchant_id;
+        $locationId = $request->location_id;
+        
+        $location = Location::where('id', $locationId)->first();
+
+        if (!$location) {
+            return response()->json(['error' => 'Location not found'], 404);
+        }
+
+        $name = $location->name;
+        $location =  $location->city . ', ' . $location->state . ', ' . $location->country;
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'You are a helpful assistant that generates ad content.',
+            ],
+            [
+                'role' => 'user',
+                'content' => "Generate 10 competitor names (30 characters or less) for a Google Ads campaign for the following merchant : " . $name . " located in " . $location . " within 10 miles. See if you can use Google Business profle informaiton. Ensure 3 competitor names are always generated. Do not include any other text in your response. Also dont include \"\" or any wildcards in your response.",
+            ],
+        ];
+
+        // Initialize OpenAI client using the factory method
+        $openAIClient = OpenAI::client(env('OPENAI_API_KEY'));
+
+        $response = $openAIClient->chat()->create([
+            'model' => 'gpt-4o',
+            'messages' => $messages,
+        ]);
+
+        $generatedText = $response['choices'][0]['message']['content'];
+
+        // Parse the generated text into keywords
+        $keywords = explode("\n", trim($generatedText));
+
+        // Trim each keyword to remove any leading or trailing whitespace
+        $keywords = array_map('trim', $keywords);
 
         return response()->json(['keywords' => $keywords]);
     }
